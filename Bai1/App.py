@@ -404,8 +404,8 @@ while choice != '0':
         # Tạo một từ điển để đếm số lần xuất hiện của mỗi biển số xe
         motorcycle_counts = {}
         today = datetime.now().date()
-        start_of_day = datetime.combine(today, datetime.time.min)
-        end_of_day = datetime.combine(today, datetime.time.max)
+        start_of_day = datetime.combine(today, datetime.min.time())
+        end_of_day = datetime.combine(today, datetime.max.time())
         for motorcycle in vehicle_manager.daily_vehicles:
             if isinstance(motorcycle, Motorcycle):
                 entry_time = motorcycle.check_in_time
