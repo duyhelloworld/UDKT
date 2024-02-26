@@ -390,12 +390,15 @@ while choice != '0':
         print("\nSố lượng phương tiện đang đậu:", len(vehicle_manager.vehicles))
 
     elif choice == '4':
+        if len(vehicle_manager.vehicles) == 0:
+            print("Không có xe nào trong bãi đậu!")
+            continue
         print("\n=====================================\n")
         print("1. Chỉ xe máy ")
         print("2. Chỉ xe đạp ")
         print("3. Sắp xếp theo thời gian đậu (tăng dần) ")
         print("4. Sắp xếp theo thời gian đậu (giảm dần) ")
-        by = input()
+        by = input("Nhập lựa chọn: ")
         if by == '1':
             vehicle_manager.display_sorted_vehicles(type_vehicle='1')
         elif by == '2':
