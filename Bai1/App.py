@@ -184,8 +184,16 @@ class ParkingLot:
             print("\n=====================================\n")
             print("Phương tiện không được phép lấy ra. Hãy nộp phí trước khi lấy phương tiện ra.")
 
-    def display_sorted_vehicles(self):
-        sorted_list = sorted(self.vehicles, key=lambda x: x.check_in_time)
+    def display_sorted_vehicles(self, type_vehicle=None, is_asc=None):
+        sorted_list = []
+        if type_vehicle is not None:
+            sorted_list = sorted(self.vehicles, 
+                key=lambda v: v.type_vehicle,
+                reverse=is_asc)
+        if is_asc is not None:
+            sorted_list = sorted(self.vehicles,
+                key=lambda v: v.check_in_time,
+                reverse=is_asc)
         for vehicle in sorted_list:
             print("\n=====================================\n")
             print(vehicle)
@@ -382,8 +390,24 @@ while choice != '0':
         print("\nSố lượng phương tiện đang đậu:", len(vehicle_manager.vehicles))
 
     elif choice == '4':
-        vehicle_manager.display_sorted_vehicles()
-
+        print("\n=====================================\n")
+        print("1. Chỉ xe máy ")
+        print("2. Chỉ xe đạp ")
+        print("3. Sắp xếp theo thời gian đậu (tăng dần) ")
+        print("4. Sắp xếp theo thời gian đậu (giảm dần) ")
+        by = input()
+        if by == '1':
+            vehicle_manager.display_sorted_vehicles(type_vehicle='1')
+        elif by == '2':
+            vehicle_manager.display_sorted_vehicles(type_vehicle='2')
+        elif by == '3':
+            vehicle_manager.display_sorted_vehicles(is_asc=True)
+        elif by == '3':
+            vehicle_manager.display_sorted_vehicles(is_asc=False)
+        else:
+            print("Lựa chọn không hợp lệ")
+            print("=====================")
+            continue
     elif choice == '5':
         vehicle_manager.calculate_daily_revenue()
 
