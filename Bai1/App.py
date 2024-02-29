@@ -1,239 +1,240 @@
-from datetime import datetime
-from Const import *
+import datetime
 
+# Constants for fees and fines
+BICYCLE_DAY_FEE = 2000
+BICYCLE_NIGHT_FEE = 4000
+BICYCLE_OVERNIGHT_FEE = 15000
+BICYCLE_LOST_TICKET_FINE = 30000
+MOTORCYCLE_DAY_FEE = 3000
+MOTORCYCLE_NIGHT_FEE = 6000
+MOTORCYCLE_OVERNIGHT_FEE = 35000
+MOTORCYCLE_LOST_TICKET_FINE = 60000
+
+# Base class
 class Vehicle:
     def __init__(self, vehicle_type, check_in_time, license_plate, ticket_id):
         self.vehicle_type = vehicle_type
         self.check_in_time = check_in_time
-        # None for bicycles
-        self.license_plate = license_plate  
+        self.license_plate = license_plate  # None for bicycles
         self.ticket_id = ticket_id
 
     def calculate_fee(self, check_out_time, lost_ticket):
-        pass
+        raise NotImplementedError("Subclasses must implement this method")
 
     def __str__(self):
-        return f"""
-            Loại xe: {"Xe đạp " if self.vehicle_type == 0 else "Xe máy " if self.vehicle_type == 1 else "Không xác định"},
-            Thời gian đậu: {self.check_in_time},
-            Biển số xe: {self.license_plate if self.license_plate else "Không có"},
-            Mã vé: {self.ticket_id}"""
+        return f"Loại xe: {self.vehicle_type}, Thời gian đậu: {self.check_in_time}, Biển số xe: {self.license_plate}, Mã vé: {self.ticket_id}"
 
+# Derived classes
 class Bicycle(Vehicle):
     def __init__(self, check_in_time, ticket_id):
-        super().__init__(BICYCLE_CODE, check_in_time, None, ticket_id)
+        super().__init__('Xe đạp', check_in_time, None, ticket_id)
 
     def calculate_fee(self, check_out_time, lost_ticket):
         fee = 0
-        if lost_ticket:
-            fee += BICYCLE_LOST_TICKET_FINE
-        else:
-            if START_WORK_HOUR <= check_out_time.hour < 18:
+        hours_parked = (check_out_time - self.check_in_time).total_seconds() / 3600
+
+        if hours_parked <= 12:  # Xe gửi trong ngày
+            if 8 <= check_out_time.hour < 18:
                 fee += BICYCLE_DAY_FEE
-            elif 18 <= check_out_time.hour < END_WORK_HOUR:
+            elif 18 <= check_out_time.hour < 22:
                 fee += BICYCLE_NIGHT_FEE
-            else:
-                fee += BICYCLE_OVERNIGHT_FEE
+        else:  # Xe gửi qua ngày
+            fee += BICYCLE_OVERNIGHT_FEE
+        
         return fee
 
 class Motorcycle(Vehicle):
     def __init__(self, check_in_time, license_plate, ticket_id):
-        super().__init__(MOTORCYCLE_CODE, check_in_time, license_plate, ticket_id)
+        super().__init__('Xe máy', check_in_time, license_plate, ticket_id)
 
     def calculate_fee(self, check_out_time, lost_ticket):
         fee = 0
-        if lost_ticket:
-            fee += MOTORCYCLE_LOST_TICKET_FINE
-            
-        else:
-            if START_WORK_HOUR <= check_out_time.hour < 18:
+        hours_parked = (check_out_time - self.check_in_time).total_seconds() / 3600
+
+        if hours_parked <= 12:  # Xe gửi trong ngày
+            if 8 <= check_out_time.hour < 18:
                 fee += MOTORCYCLE_DAY_FEE
-            elif 18 <= check_out_time.hour < END_WORK_HOUR:
+            elif 18 <= check_out_time.hour < 22:
                 fee += MOTORCYCLE_NIGHT_FEE
-            else:
-                fee += MOTORCYCLE_OVERNIGHT_FEE
+        else:  # Xe gửi qua ngày
+            fee += MOTORCYCLE_OVERNIGHT_FEE
+
         return fee
+
 
 # Parking lot management
 class ParkingLot:
     def __init__(self):
         self.vehicles = []
-        # Lost ticket vehicles list
-        self.lost_ticket_vehicles = [] 
-        # List of vehicles that need alert
-        self.alert_list = []  
-        # List of vehicles for daily statistics
-        self.daily_vehicles = []  
+        self.lost_ticket_vehicles = []  # Lost ticket vehicles list
+        self.alert_list = []  # List of vehicles that need alert
+        self.daily_vehicles = []  # List of vehicles for daily statistics
+        self.doanh_thu = 0  # Doanh thu initialization
 
-        # Ví dụ mẫu
-        # Bicycle
-        # xedapsang = Bicycle(datetime(2024, 2, 23, 10, 0), "xedapsang")
-        # self.vehicles.append(xedapsang)
+        # thêm dữ liệu ( ngày hôm nay là ngày 25)
+        # xe đạp
 
-        # xedaptoi = Bicycle(datetime(2024, 2, 23, 20, 0), "xedaptoi")
-        # self.vehicles.append(xedaptoi)
+        xedapsang = Bicycle(datetime.datetime(2024, 2, 26, 10, 0), "xedapsang")
+        self.vehicles.append(xedapsang)
 
-        # xedaphomqua = Bicycle(datetime(2024, 2, 22, 11, 0), "xedaphomqua")
-        # self.vehicles.append(xedaphomqua)
+        xedaptoi = Bicycle(datetime.datetime(2024, 2, 26, 20, 0), "xedaptoi")
+        self.vehicles.append(xedaptoi)
 
-        # xedapcanhbao = Bicycle(datetime(2024, 2, 20, 11, 0), "xedapcanhbao")
-        # self.vehicles.append(xedapcanhbao)
+        xedaphomqua = Bicycle(datetime.datetime(2024, 2, 25, 21, 0), "xedaphomqua")
+        self.vehicles.append(xedaphomqua)
+        xedapcanhbao = Bicycle(datetime.datetime(2024, 2, 20, 11, 0), "xedapcanhbao")
+        self.vehicles.append(xedapcanhbao)
+        
+        
+        # xe máy
+        xemay1 = Motorcycle(datetime.datetime(2024, 2, 26, 9, 0), "123", "xemaysang")
+        self.vehicles.append(xemay1) # danh sach xe dang đậu
+        self.daily_vehicles.append(xemay1) # danh sach thong ke
 
-        # Xe máy
-        # xemay1 = Motorcycle(datetime(2024, 2, 23, 9, 0), "123", "xemaysang")
-        # self.vehicles.append(xemay1) 
-        # self.daily_vehicles.append(xemay1) 
 
-        # xemay2 = Motorcycle(datetime(2024, 2, 23, 21, 0), "456", "xemaytoi")
-        # self.vehicles.append(xemay2)
-        # self.daily_vehicles.append(xemay2)
+        xemay2 = Motorcycle(datetime.datetime(2024, 2, 26, 21, 0), "456", "xemaytoi")
+        self.vehicles.append(xemay2)
+        self.daily_vehicles.append(xemay2)
 
-        # xemay3 = Motorcycle(datetime(2024, 2, 22, 9, 0), "789", "xemayhomqua")
-        # self.vehicles.append(xemay3)
-        # self.daily_vehicles.append(xemay3)
+        xemay3 = Motorcycle(datetime.datetime(2024, 2, 25, 9, 0), "789", "xemayhomqua")
+        self.vehicles.append(xemay3)
+        self.daily_vehicles.append(xemay3)
 
-        # xemay4 = Motorcycle(datetime(2024, 2, 17, 9, 0), "1122", "xemaycanhbao")
-        # self.vehicles.append(xemay4)
-        # self.daily_vehicles.append(xemay4)
-
-    def __add_lost_ticket_vehicle__(self, vehicle):
+        xemay4 = Motorcycle(datetime.datetime(2024, 2, 17, 9, 0), "1122", "xemaycanhbao")
+        self.vehicles.append(xemay4)
+    def add_lost_ticket_vehicle(self, vehicle):
         self.lost_ticket_vehicles.append(vehicle)
 
     def add_daily_vehicle(self, vehicle):
         self.daily_vehicles.append(vehicle)
 
-    def __is_in_lost_ticket_list__(self, vehicle):
-        return vehicle in self.lost_ticket_vehicles
-
-    def find_vehicle_by_ticket_id(self, ticket_id):
-        if ticket_id is None:
-            return None
-        for vehicle in self.vehicles:
-            if vehicle.ticket_id == str(ticket_id) or vehicle.ticket_id == int(ticket_id):
-                return vehicle
-        return None
-
-    def __load_alert_vehicles__(self):
-        current_time = datetime.now()
+    def add_alert_vehicles(self):
+        current_time = datetime.datetime.now()
         for vehicle in self.vehicles:
             entry_time = vehicle.check_in_time
             if isinstance(vehicle, Bicycle) and (current_time - entry_time).days >= 3:
-                # In thông tin xe đạp cần cảnh báo
-                self.alert_list.append(vehicle)
+                print("\n=====================================\n")
+                print(vehicle)  # In thông tin xe đạp cần cảnh báo
             elif isinstance(vehicle, Motorcycle) and (current_time - entry_time).days >= 5:
-                # In thông tin xe máy cần cảnh báo
-                self.alert_list.append(vehicle)
+                print("\n=====================================\n")
+                print(vehicle)  # In thông tin xe máy cần cảnh báo
+
 
     def add_vehicle(self, vehicle):
-        if self.find_vehicle_by_ticket_id(vehicle.ticket_id) is not None:
+        if any(existing_vehicle.ticket_id == vehicle.ticket_id for existing_vehicle in self.vehicles):
             print("\n=====================================\n")
-            print(f"Đã tồn tại xe có mã {vehicle.ticket_id} trong hệ thống. Không thể thêm phương tiện mới.")
+            print("Mã vé đã tồn tại trong hệ thống. Không thể thêm phương tiện mới.")
             return
-        if vehicle.ticket_id is None:
-            vehicle.ticket_id = len(self.vehicles) + 1
+        if any(existing_vehicle.license_plate == vehicle.license_plate for existing_vehicle in self.vehicles):
+            print("\n=====================================\n")
+            print("Biển số xe đã tồn tại trong hệ thống. Không thể thêm phương tiện mới.")
+            return
         self.vehicles.append(vehicle)
         print("\n=====================================\n")
         print("Thêm phương tiện đậu vào thành công.")
-        print(f"Mã vé xe : {vehicle.ticket_id}")
+
+   
+        # Các phần còn lại của lớp không thay đổi
 
     def remove_vehicle(self, ticket_id, has_paid_fee=None, has_ticket=None, license_plate=None):
-        # Tìm kiếm phương tiện với mã vé
-        found_vehicle = self.find_vehicle_by_ticket_id(ticket_id)
-        if found_vehicle is None:
-            print("\n=====================================\n")
-            print("Không tìm thấy phương tiện với mã vé đã nhập.")
-            return
-        
-        # Kiểm tra loại phương tiện có khớp không
-        if has_ticket:
-            if isinstance(found_vehicle, Bicycle):
-                print("\n=====================================\n")
-                print(f"Vé {found_vehicle.ticket_id} không phải cho xe máy. Không thể lấy ra.")
-                return
-            elif isinstance(found_vehicle, Motorcycle):
-                print("\n=====================================\n")
-                print(f"Vé {found_vehicle.ticket_id} không phải cho xe đạp. Không thể lấy ra.")
-                return
-            
-        # Kiểm tra biển số xe (nếu có)
-        if license_plate is not None and license_plate != found_vehicle.license_plate:
-            print("\n=====================================\n")
-            print("Biển số xe không khớp với dữ liệu trong hệ thống. Không thể lấy phương tiện ra.")
-            return
+        current_time = datetime.datetime.now().time()
 
-        # Tính toán phí nếu cần thiết và hiển thị thông tin
-        fee = found_vehicle.calculate_fee(datetime.now(), False) if has_ticket else found_vehicle.calculate_fee(datetime.now(), True)
-        # In chi phí trước khi xác nhận đã nộp tiền phí
-        print("Chi phí:", fee) 
-
-        # Xác nhận việc lấy xe ra và xóa nó khỏi danh sách nếu đã nộp phí
-        if has_paid_fee is None:
-            # Yêu cầu xác nhận đã nộp phí
-            # Mở rộng sẽ là chụp bill chuyển khoản / thu tiền mặt
-            confirm_fee = input("Đã nộp tiền phí (Y/N): ").upper()
-            if confirm_fee not in SELECT_CHOICE:
-                print("\n=====================================\n")
-                print("Lựa chọn không hợp lệ.")
-                return
-            has_paid_fee = confirm_fee == 'Y'  
-        if has_paid_fee:
+        # Kiểm tra nếu thời gian hiện tại nằm trong khoảng không cho phép lấy xe ra
+        if (datetime.time(22, 5) <= current_time <= datetime.time(23, 59)) or (datetime.time(0, 0) <= current_time <= datetime.time(8, 0)):
             print("\n=====================================\n")
-            print("Phương tiện đã được lấy ra thành công.")
-            self.vehicles.remove(found_vehicle)
+            print("Hiện tại không thể lấy xe ra.")
         else:
-            print("\n=====================================\n")
-            print("Phương tiện không được phép lấy ra. Hãy nộp phí trước khi lấy phương tiện ra.")
+            vehicle_to_remove = None
+            for vehicle in self.vehicles:
+                if vehicle.ticket_id == ticket_id:
+                    vehicle_to_remove = vehicle
+                    break
 
-    def display_sorted_vehicles(self, type_vehicle=None, is_asc=None):
-        sorted_list = []
-        if type_vehicle is not None:
-            sorted_list = sorted(self.vehicles, 
-                key=lambda v: v.type_vehicle,
-                reverse=is_asc)
-        if is_asc is not None:
-            sorted_list = sorted(self.vehicles,
-                key=lambda v: v.check_in_time,
-                reverse=is_asc)
+            if vehicle_to_remove is None:
+                print("\n=====================================\n")
+                print("Không tìm thấy phương tiện với mã vé đã nhập.")
+            else:
+                if vehicle_to_remove.vehicle_type == 'Xe máy':
+                    license_plate = input("Nhập biển số xe: ")
+                    if license_plate != vehicle_to_remove.license_plate:
+                        print("\n=====================================\n")
+                        print("Biển số xe không khớp với dữ liệu trong hệ thống. Không thể lấy phương tiện ra.")
+                        return
+
+                has_ticket = input("Có vé xe (Y/N): ").upper() == 'Y'
+                if has_ticket:
+                    fee = vehicle_to_remove.calculate_fee(datetime.datetime.now(), False)
+                    print("Chi phí:", fee)
+                    has_paid_fee = input("Đã nộp tiền phí (Y/N): ").upper() == 'Y'
+                    if has_paid_fee:
+                        print("\n=====================================\n")
+                        print("Phương tiện đã được lấy ra thành công.")
+                        self.vehicles.remove(vehicle_to_remove)  # Loại bỏ phương tiện khỏi danh sách sau khi lấy ra thành công
+                    else:
+                        print("\n=====================================\n")
+                        print("Phương tiện Không được phép lấy.")
+                else:
+                    if vehicle_to_remove.vehicle_type == 'Xe đạp':
+                        fee = BICYCLE_LOST_TICKET_FINE
+                    elif vehicle_to_remove.vehicle_type == 'Xe máy':
+                        fee = MOTORCYCLE_LOST_TICKET_FINE
+                    print("Chi phí:", fee)
+                    has_signed_document = input("Xác nhận người gửi xe đã nộp phí và biên bản (Y/N): ").upper() == 'Y'
+                    if has_signed_document:
+                        print("\n=====================================\n")
+                        print("Phương tiện đã được lấy ra thành công.")
+                        self.vehicles.remove(vehicle_to_remove)  # Loại bỏ phương tiện khỏi danh sách sau khi lấy ra thành công
+                    else:
+                        print("\n=====================================\n")
+                        print("Phương tiện Không được phép lấy ra.")
+
+
+    def display_sorted_vehicles(self):
+        print("\n=====================================\n")
+        vehicle_type = input("Nhập loại phương tiện (1: Xe đạp, 2: Xe máy): ")
+
+        if vehicle_type not in ['1', '2']:
+            print("Lựa chọn không hợp lệ!")
+            return
+
+        sort_order = input("Chọn thứ tự sắp xếp (1: Tăng dần, 2: Giảm dần): ")
+        if sort_order not in ['1', '2']:
+            print("Lựa chọn không hợp lệ!")
+            return
+
+        # Lọc danh sách theo loại phương tiện
+        filtered_list = [vehicle for vehicle in self.vehicles if (vehicle_type == '1' and isinstance(vehicle, Bicycle)) or (vehicle_type == '2' and isinstance(vehicle, Motorcycle))]
+
+        # Sắp xếp danh sách
+        sorted_list = sorted(filtered_list, key=lambda x: x.check_in_time, reverse=(sort_order == '2'))
+
+        # In danh sách
         for vehicle in sorted_list:
             print("\n=====================================\n")
             print(vehicle)
 
-    # Tính doanh thu hàng ngày các xe gửi  
-    def calculate_daily_revenue(self):
-        total_revenue_bicycle = 0
-        total_revenue_motorbicycle = 0
-        current_date = datetime.now().date()
-        for vehicle in self.vehicles:
-            if START_WORK_HOUR <= vehicle.check_in_time.hour <= END_WORK_HOUR and current_date > vehicle.check_in_time.date() and not self.__is_in_lost_ticket_list__(vehicle):  
-                if isinstance(vehicle, Motorcycle):
-                    fee = vehicle.calculate_fee(datetime.now(), False )
-                    total_revenue_bicycle += fee
-                elif isinstance(vehicle, Bicycle):
-                    fee = vehicle.calculate_fee(datetime.now(), False )
-                    total_revenue_motorbicycle += fee
-        print("\n=====================================\n")
-        print("Doanh thu của ngày hiện tại:", total_revenue_bicycle + total_revenue_motorbicycle)
-        print("- Doanh thu từ xe đạp:", total_revenue_bicycle)
-        print("- Doanh thu từ xe máy:", total_revenue_motorbicycle)
+
 
     def get_alert_list(self):
         alert_list = []
-        current_date = datetime.now().date()
+        current_date = datetime.datetime.now().date()
         for vehicle in self.vehicles:
             entry_date = vehicle.check_in_time.date()
-            if isinstance(vehicle, Bicycle):
+            if vehicle.vehicle_type == "Xe đạp":
                 if (current_date - entry_date).days >= 3:
                     alert_list.append(vehicle)
-            elif isinstance(vehicle, Motorcycle):
+            elif vehicle.vehicle_type == "Xe máy":
                 if (current_date - entry_date).days >= 5:
                     alert_list.append(vehicle)
         return alert_list
 
+
     def get_lost_ticket_vehicles(self):
         lost_ticket_vehicles = []
+        current_date = datetime.datetime.now().date()
         for vehicle in self.vehicles:
             entry_hour = vehicle.check_in_time.hour
-            if entry_hour >= START_WORK_HOUR and entry_hour <= END_WORK_HOUR:
+            if entry_hour >= 8 and entry_hour <= 22:
                 if vehicle.ticket_id == "":
                     lost_ticket_vehicles.append(vehicle)
         return lost_ticket_vehicles
@@ -241,9 +242,9 @@ class ParkingLot:
     def get_motorcycles_with_multiple_entries(self):
         motorcycle_counts = {}
         for vehicle in self.vehicles:
-            if isinstance(vehicle, Motorcycle):
+            if vehicle.vehicle_type == "Xe máy":
                 entry_date = vehicle.check_in_time.date()
-                if entry_date == datetime.now().date():
+                if entry_date == datetime.datetime.now().date():
                     license_plate = vehicle.license_plate
                     if license_plate in motorcycle_counts:
                         motorcycle_counts[license_plate] += 1
@@ -257,7 +258,7 @@ class ParkingLot:
         for vehicle in self.vehicles:
             if isinstance(vehicle, Motorcycle):
                 entry_date = vehicle.check_in_time.date()
-                if entry_date == datetime.now().date():
+                if entry_date == datetime.datetime.now().date():
                     license_plate = vehicle.license_plate
                     if license_plate in motorcycle_counts:
                         motorcycle_counts[license_plate] += 1
@@ -287,7 +288,7 @@ while choice != '0':
     print("6. Hiển thị danh sách phương tiện cần cảnh báo")
     print("7. Hiển thị danh sách phương tiện bị mất vé trong ngày")
     print("8. Hiển thị danh sách xe máy có lượt gửi từ 2 lần trong ngày hiện tại")
-    print("9. Hiển thị danh sách thống kê lượt gửi xe trong ngày")
+    print("9. Hiển thị danh sách thống kê lượt gửi xe máy")
     print("0. Thoát")
     choice = input("Nhập lựa chọn của bạn: ")
 
@@ -297,122 +298,111 @@ while choice != '0':
             print("Lựa chọn không hợp lệ!")
             continue
 
+        ticket_id = input("Nhập mã vé: ")
+        if not ticket_id:
+            print("Vui lòng nhập mã vé!")
+            continue
+
         if vehicle_type == '2':
             license_plate = input("Nhập biển số xe: ")
             if not license_plate:
                 print("Vui lòng nhập biển số xe!")
                 continue
 
-        ticket_id = None
         if vehicle_type == '1':
-            bicycle = Bicycle(datetime.now(), ticket_id)
+            bicycle = Bicycle(datetime.datetime.now(), ticket_id)
             vehicle_manager.add_vehicle(bicycle)
-            # vehicle_manager.add_daily_vehicle(bicycle)
         elif vehicle_type == '2':
-            check_in_time = datetime.now()
+            check_in_time = datetime.datetime.now()
             motorcycle = Motorcycle(check_in_time, license_plate, ticket_id)
             vehicle_manager.add_vehicle(motorcycle)
             # Thêm xe máy vào danh sách thống kê
             vehicle_manager.add_daily_vehicle(motorcycle)
 
+
+    # trong th lấy xe từ 22h 05 - đến 8h ngày hôm sau không đc lấy xe
     elif choice == '2':
-        vehicle_type = input("Nhập loại phương tiện (1: Xe đạp, 2: Xe máy): ")
-        if vehicle_type not in ['1', '2']:
-            print("Lựa chọn không hợp lệ!")
-            continue
-
-        ticket_id = input("Nhập mã vé: ")
-
-        # Tìm kiếm phương tiện với mã vé
-        vehicle_to_remove = vehicle_manager.find_vehicle_by_ticket_id(ticket_id)
-
-        if vehicle_to_remove is None:
-            print("\n=====================================\n")
-            print("Không tìm thấy phương tiện với mã vé đã nhập.")
+        current_time = datetime.datetime.now().time()
+        
+        # Kiểm tra nếu thời gian hiện tại nằm trong khoảng không cho phép lấy xe ra
+        if (datetime.time(22, 5) <= current_time <= datetime.time(23, 59)) or (datetime.time(0, 0) <= current_time <= datetime.time(8, 0)):
+            print("Hiện tại không thể lấy xe ra.")
         else:
-            if (vehicle_type == '1' and isinstance(vehicle_to_remove, Bicycle)) or \
-            (vehicle_type == '2' and isinstance(vehicle_to_remove, Motorcycle)):
-                if vehicle_type == '2':
-                    license_plate = input("Nhập biển số xe: ")
-                    if license_plate != vehicle_to_remove.license_plate:
-                        print("\n=====================================\n")
-                        print("Biển số xe không khớp với dữ liệu trong hệ thống. Không thể lấy phương tiện ra.")
-                        continue
+            vehicle_type = input("Nhập loại phương tiện (1: Xe đạp, 2: Xe máy): ")
+            if vehicle_type not in ['1', '2']:
+                print("Lựa chọn không hợp lệ!")
+                continue
 
-                # Kiểm tra có vé hay không
-                input_has_ticket = input("Có vé (Y/N): ").upper()
-                if input_has_ticket not in SELECT_CHOICE:
-                    print("\n=====================================\n")
-                    print("Lựa chọn không hợp lệ.")
-                    continue
+            ticket_id = input("Nhập mã vé: ")
 
-                has_ticket = input_has_ticket == 'Y'
-                # In chi phí trước khi xác nhận đã nộp tiền phí nếu có vé
-                fee = vehicle_to_remove.calculate_fee(datetime.now(), False)
-                print("Chi phí:", fee)
-                if has_ticket:
-                    # Xác nhận đã nộp phí nếu có vé
-                    input_has_paid_fee = input("Xác nhận người gửi xe đã nộp phí (Y/N): ").upper()
-                    if input_has_paid_fee not in SELECT_CHOICE:
-                        print("\n=====================================\n")
-                        print("Lựa chọn không hợp lệ.")
-                        continue
+            # Tìm kiếm phương tiện với mã vé
+            vehicle_to_remove = None
+            for vehicle in vehicle_manager.vehicles:
+                if vehicle.ticket_id == ticket_id:
+                    vehicle_to_remove = vehicle
+                    break
 
-                    has_paid_fee = input_has_paid_fee == 'Y'
-                    if has_paid_fee:
-                        print("\n=====================================\n")
-                        print("Phương tiện đã được lấy ra thành công.")
-                        vehicle_manager.vehicles.remove(vehicle_to_remove)
-                    else:
-                        print("\n=====================================\n")
-                        print("Phương tiện Không được phép lấy.")
-                else:
-                    # Xác nhận đã nộp phí và biên bản nếu không có vé
-                    input_has_signed_document = input("Xác nhận người gửi xe đã ký biên bản (Y/N): ").upper()
-                    if input_has_signed_document not in SELECT_CHOICE:
-                        print("\n=====================================\n")
-                        print("Lựa chọn không hợp lệ.")
-                        continue
-                    has_signed_document = input_has_signed_document.upper() == 'Y'
-                    if has_signed_document:
-                        print("\n=====================================\n")
-                        print("Phương tiện đã được lấy ra thành công.")
-                        vehicle_manager.vehicles.remove(vehicle_to_remove)
-                    else:
-                        print("\n=====================================\n")
-                        print("Phương tiện Không được phép lấy ra.")
-            else:
+            if vehicle_to_remove is None:
                 print("\n=====================================\n")
-                print("Loại phương tiện không khớp với dữ liệu trong hệ thống.")
+                print("Không tìm thấy phương tiện với mã vé đã nhập.")
+            else:
+                if (vehicle_type == '1' and isinstance(vehicle_to_remove, Bicycle)) or \
+                (vehicle_type == '2' and isinstance(vehicle_to_remove, Motorcycle)):
+                    if vehicle_type == '2':
+                        license_plate = input("Nhập biển số xe: ")
+                        if license_plate != vehicle_to_remove.license_plate:
+                            print("\n=====================================\n")
+                            print("Biển số xe không khớp với dữ liệu trong hệ thống. Không thể lấy phương tiện ra.")
+                            continue
+
+                    # Kiểm tra có vé hay không
+                    has_ticket = input("Có vé xe (Y/N): ").upper() == 'Y'
+                    if has_ticket:
+                        # In chi phí nếu có vé
+                        fee = vehicle_to_remove.calculate_fee(datetime.datetime.now(), False)
+                        print("Chi phí:", fee)
+                        has_paid_fee = input("Đã nộp tiền phí (Y/N): ").upper() == 'Y'
+                        if has_paid_fee:
+                            print("\n=====================================\n")
+                            print("Phương tiện đã được lấy ra thành công.")
+                            vehicle_manager.doanh_thu += fee  # Cộng vào biến doanh thu
+                            vehicle_manager.vehicles.remove(vehicle_to_remove)  # Loại bỏ phương tiện khỏi danh sách sau khi lấy ra thành công
+                        else:
+                            print("\n=====================================\n")
+                            print("Phương tiện Không được phép lấy.")
+                    else:
+                        # In chi phí nếu không có vé
+                        if isinstance(vehicle_to_remove, Bicycle):
+                            fee = BICYCLE_LOST_TICKET_FINE
+                        elif isinstance(vehicle_to_remove, Motorcycle):
+                            fee = MOTORCYCLE_LOST_TICKET_FINE
+                        print("Chi phí:", fee)
+                        # Xác nhận đã nộp phí và biên bản nếu không có vé
+                        has_signed_document = input("Xác nhận người gửi xe đã nộp phí và biên bản (Y/N): ").upper() == 'Y'
+                        if has_signed_document:
+                            print("\n=====================================\n")
+                            print("Phương tiện đã được lấy ra thành công.")
+                            vehicle_manager.doanh_thu += fee  # Cộng vào biến doanh thu
+                            vehicle_manager.vehicles.remove(vehicle_to_remove)  # Loại bỏ phương tiện khỏi danh sách sau khi lấy ra thành công
+                        else:
+                            print("\n=====================================\n")
+                            print("Phương tiện Không được phép lấy ra.")
+                else:
+                    print("\n=====================================\n")
+                    print("Loại phương tiện không khớp với dữ liệu trong hệ thống.")
 
     elif choice == '3':
         print("\n=====================================\n")
         print("\nSố lượng phương tiện đang đậu:", len(vehicle_manager.vehicles))
 
     elif choice == '4':
-        if len(vehicle_manager.vehicles) == 0:
-            print("Không có xe nào trong bãi đậu!")
-            continue
-        print("\n=====================================\n")
-        print("1. Chỉ xe máy ")
-        print("2. Chỉ xe đạp ")
-        print("3. Sắp xếp theo thời gian đậu (tăng dần) ")
-        print("4. Sắp xếp theo thời gian đậu (giảm dần) ")
-        by = input("Nhập lựa chọn: ")
-        if by == '1':
-            vehicle_manager.display_sorted_vehicles(type_vehicle='1')
-        elif by == '2':
-            vehicle_manager.display_sorted_vehicles(type_vehicle='2')
-        elif by == '3':
-            vehicle_manager.display_sorted_vehicles(is_asc=True)
-        elif by == '3':
-            vehicle_manager.display_sorted_vehicles(is_asc=False)
-        else:
-            print("Lựa chọn không hợp lệ")
-            print("=====================")
-            continue
+        vehicle_manager.display_sorted_vehicles()
+
+    ## do đã thêm diềud kiện không đc lấy xe ra trong trường hợp 22h05 đến 8h hôm sau nên doanh thu sẽ là 8h sáng đến 22h05 cùng ngày
     elif choice == '5':
-        vehicle_manager.calculate_daily_revenue()
+        print("\n=====================================\n")
+        print("Doanh thu của ngày hiện tại:", vehicle_manager.doanh_thu)
+
 
     elif choice == '6':
         print("Danh sách phương tiện cần cảnh báo:")
@@ -430,9 +420,9 @@ while choice != '0':
     elif choice == '8':
         # Tạo một từ điển để đếm số lần xuất hiện của mỗi biển số xe
         motorcycle_counts = {}
-        today = datetime.now().date()
-        start_of_day = datetime.combine(today, datetime.min.time())
-        end_of_day = datetime.combine(today, datetime.max.time())
+        today = datetime.datetime.now().date()
+        start_of_day = datetime.datetime.combine(today, datetime.time.min)
+        end_of_day = datetime.datetime.combine(today, datetime.time.max)
         for motorcycle in vehicle_manager.daily_vehicles:
             if isinstance(motorcycle, Motorcycle):
                 entry_time = motorcycle.check_in_time
@@ -455,9 +445,12 @@ while choice != '0':
             print(f"Biển số xe: {license_plate}  số lần: {count}")
 
 
+
+
+
     elif choice == '9':
         print("\n=====================================\n")
-        print("\nDanh sách thống kê lượt gửi xe trong ngày:")
+        print("\nDanh sách thống kê lượt gửi xe máy :")
         for vehicle in vehicle_manager.daily_vehicles:
             print("\n=====================================\n")
             print(vehicle)
